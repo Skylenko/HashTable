@@ -32,7 +32,7 @@ namespace Test
         public void ShouldAddKeyValue()
         {
             _hashTable.Add("Something", 9);
-            Assert.AreEqual(_hashTable.Size, 1);
+            Assert.AreEqual(_hashTable.Length(), 1);
         }
 
         [Test]

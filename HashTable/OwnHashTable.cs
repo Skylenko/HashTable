@@ -4,9 +4,9 @@ namespace HashTable
 {
     public class OwnHashTable : IHashTable
     {
-        public int Size;
+        private int _size;
 
-        private class HashTableEntry
+        class HashTableEntry
         {
             internal object Key;
             internal object Value;
@@ -24,12 +24,16 @@ namespace HashTable
             }
             return true;
         }
-        
+
         private static int IndexFor(int h, int length)
         {
             return h & (length - 1);
         }
 
+        public int Length()
+        {
+            return _size;
+        }
 
         private int Index(object key)
         {
@@ -54,9 +58,9 @@ namespace HashTable
 
             _tableEntries[index] = hashTableEntry;
 
-            Size++;
+            _size++;
         }
-        
+
         public object this[object key]
         {
             get
@@ -88,9 +92,7 @@ namespace HashTable
 
         public bool TryGet(object key, out object value)
         {
-            int index = Index(key);
-            HashTableEntry res = _tableEntries[index];
-            value = res.Value;
+            value = _tableEntries[Index(key)].Value;
             return value != null;
         }
     }
