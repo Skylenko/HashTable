@@ -1,4 +1,4 @@
-﻿namespace HashTable
+﻿namespace Epam.Mentoring.Collections
 {
     public interface IHashTable
     {
