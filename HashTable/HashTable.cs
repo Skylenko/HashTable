@@ -5,23 +5,39 @@ namespace Epam.Mentoring.Collections
 {
     public class HashTable : IHashTable
     {
+        private const int DefaultBucketsNumber = 10;
+
+        private const float DefaultLoadFactor = 0.75f;
+
         public int Size { get; private set; }
 
-        private class HashTableEntry
+        private float loadFactor;
+
+        private Bucket[] buckets;
+
+        public HashTable(float loadFactor, int capacity)
+        {
+            this.loadFactor = loadFactor;
+            buckets = new Bucket[capacity];
+        }
+
+        public HashTable() : this(DefaultLoadFactor, DefaultBucketsNumber)
+        {
+        }
+
+        private class Bucket
         {
             public object Key;
             public object Value;
-            public HashTableEntry Next;
+            public Bucket Next;
         }
 
-        private const int DefaultBucketsNumber = 100;
-        private HashTableEntry[] _bucket = new HashTableEntry[DefaultBucketsNumber];
 
         public bool Contains(object key)
         {
             int index = PositionInArray(key);
 
-            var cursor = _bucket[index];
+            var cursor = buckets[index];
             while (cursor != null)
             {
                 bool keyExists = key.Equals(cursor.Key);
@@ -41,13 +57,39 @@ namespace Epam.Mentoring.Collections
         private int PositionInArray(object key)
         {
             int hashCode = key.GetHashCode();
-            int index = IndexFor(hashCode, _bucket.Length);
+            int index = IndexFor(hashCode, buckets.Length);
             return index;
         }
 
         public void Add(object key, object value)
         {
-            HashTableEntry hashTableEntry = new HashTableEntry();
+            ExpandIfRequired();
+
+            PutEntry(key, value, buckets);
+        }
+
+        private void ExpandIfRequired()
+        {
+            if (((float) Size / (float) buckets.Length) >= loadFactor)
+            {
+                Bucket[] newBuckets = new Bucket[buckets.Length * 2];
+
+                for (int i = 0; i < buckets.Length; i++)
+                {
+                    var cursor = buckets[i];
+                    while (cursor != null)
+                    {
+                        PutEntry(cursor.Key, cursor.Value, newBuckets);
+                        cursor = cursor.Next;
+                    }
+                }
+                buckets = newBuckets;
+            }
+        }
+
+        private void PutEntry(object key, object value, Bucket[] buckets)
+        {
+            Bucket bucket = new Bucket();
 
             int index = PositionInArray(key);
 
@@ -61,19 +103,19 @@ namespace Epam.Mentoring.Collections
                 throw new Exception("Key already exists in the hash table");
             }
 
-            hashTableEntry.Key = key;
-            hashTableEntry.Value = value;
+            bucket.Key = key;
+            bucket.Value = value;
 
-            var tableEntry = _bucket[index];
+            var tableEntry = buckets[index];
 
             if (tableEntry == null)
             {
-                _bucket[index] = hashTableEntry;
+                buckets[index] = bucket;
             }
             else
             {
-                hashTableEntry.Next = tableEntry;
-                _bucket[index] = hashTableEntry;
+                bucket.Next = tableEntry;
+                buckets[index] = bucket;
             }
             Size++;
         }
@@ -89,7 +131,7 @@ namespace Epam.Mentoring.Collections
 
                 int index = PositionInArray(key);
 
-                var cursor = _bucket[index];
+                var cursor = buckets[index];
                 while (cursor != null)
                 {
                     bool keyExists = key.Equals(cursor.Key);
@@ -105,12 +147,12 @@ namespace Epam.Mentoring.Collections
 
                 if (value == null)
                 {
-                    _bucket[index] = null;
+                    buckets[index] = null;
                 }
-                
+
                 else
                 {
-                    var cursor = _bucket[index];
+                    var cursor = buckets[index];
                     while (cursor != null)
                     {
                         bool keyExists = key.Equals(cursor.Key);
@@ -123,7 +165,7 @@ namespace Epam.Mentoring.Collections
 
         public bool TryGet(object key, out object value)
         {
-            var valueActual = _bucket[PositionInArray(key)].Value;
+            var valueActual = buckets[PositionInArray(key)].Value;
             if (valueActual != null)
             {
                 value = valueActual;
